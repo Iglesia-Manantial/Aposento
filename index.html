@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Asistencia</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 500px) {
+      .container {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Dashboard</h1>
+
+  <div class="grid">
+    <div class="card" onclick="goTo('fechas')">
+      <div class="icon">📅</div>
+      Fechas
+    </div>
+
+    <div class="card" onclick="goTo('formulario')">
+      <div class="icon">📝</div>
+      Formulario
+    </div>
+
+    <div class="card" onclick="goTo('inscritos')">
+      <div class="icon">👥</div>
+      Inscritos
+    </div>
+
+    <div class="card" onclick="goTo('solicitudes')">
+      <div class="icon">📊</div>
+      Solicitudes
+    </div>
+  </div>
+</div>
+
+<script>
+function goTo(page) {
+  window.location.href = page + ".html";
+}
+</script>
+
+</body>
+</html>
