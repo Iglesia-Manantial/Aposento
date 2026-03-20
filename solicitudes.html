@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitudes</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      margin: 0;
+      padding: 20px;
+      background: #f4f6f9;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .number {
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .back {
+      margin-bottom: 20px;
+      display: inline-block;
+      cursor: pointer;
+      color: #007bff;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="back" onclick="volver()">⬅ Volver</div>
+
+  <h1>📊 Dashboard Solicitudes</h1>
+
+  <select id="sedeSelect">
+    <option value="">Todas las sedes</option>
+  </select>
+
+  <div class="grid">
+    <div class="card">
+      <div>Total</div>
+      <div class="number" id="total">0</div>
+    </div>
+
+    <div class="card">
+      <div>Últimos 7 días</div>
+      <div class="number" id="semana">0</div>
+    </div>
+
+    <div class="card">
+      <div>Este mes</div>
+      <div class="number" id="mes">0</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+const URL = "https://opensheet.elk.sh/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYBsU/Solicitud";
+
+let datos = [];
+
+async function cargarDatos() {
+  const res = await fetch(URL);
+  datos = await res.json();
+
+  // 🔹 llenar sedes
+  const sedes = [...new Set(datos.map(d => d["Asistencia"]))];
+
+  const select = document.getElementById("sedeSelect");
+
+  sedes.forEach(s => {
+    if (s) {
+      let option = document.createElement("option");
+      option.value = s;
+      option.textContent = s;
+      select.appendChild(option);
+    }
+  });
+
+  calcular();
+}
+
+function calcular() {
+  const sede = document.getElementById("sedeSelect").value;
+
+  let filtrados = datos;
+
+  if (sede) {
+    filtrados = datos.filter(d => d["Asistencia"] === sede);
+  }
+
+  const hoy = new Date();
+
+  let total = filtrados.length;
+
+  let semana = filtrados.filter(d => {
+    let fecha = new Date(d["Marca temporal"]);
+    let diff = (hoy - fecha) / (1000 * 60 * 60 * 24);
+    return diff <= 7;
+  }).length;
+
+  let mes = filtrados.filter(d => {
+    let fecha = new Date(d["Marca temporal"]);
+    return fecha.getMonth() === hoy.getMonth() &&
+           fecha.getFullYear() === hoy.getFullYear();
+  }).length;
+
+  document.getElementById("total").textContent = total;
+  document.getElementById("semana").textContent = semana;
+  document.getElementById("mes").textContent = mes;
+}
+
+document.getElementById("sedeSelect").addEventListener("change", calcular);
+
+function volver() {
+  window.location.href = "index.html";
+}
+
+cargarDatos();
+
+</script>
+
+</body>
+</html>
