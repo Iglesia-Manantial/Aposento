@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      margin: 0;
+      padding: 20px;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 10px;
+      background: #28a745;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: #218838;
+    }
+
+    .back {
+      margin-top: 20px;
+      display: inline-block;
+      cursor: pointer;
+      color: #007bff;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>📝 Formulario</h1>
+
+  <button class="btn" onclick="abrirFormulario()">
+    Solicitar asistencia
+  </button>
+
+  <div class="back" onclick="volver()">⬅ Volver</div>
+
+</div>
+
+<script>
+
+function abrirFormulario() {
+  window.open(
+    "https://docs.google.com/forms/d/e/1FAIpQLSeTtbO3Kywfko9Uf4NP94Asj3aPGKjhmRqGHyhzVdTPGfpxGw/viewform",
+    "_blank"
+  );
+}
+
+function volver() {
+  window.location.href = "index.html";
+}
+
+</script>
+
+</body>
+</html>
