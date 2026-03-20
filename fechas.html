@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fechas Disponibles</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      margin: 0;
+      padding: 20px;
+      background: #f4f6f9;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+
+    .back {
+      margin-bottom: 20px;
+      display: inline-block;
+      cursor: pointer;
+      color: #007bff;
+    }
+
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      tr {
+        margin-bottom: 15px;
+      }
+
+      td {
+        padding-left: 50%;
+        position: relative;
+      }
+
+      td::before {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        font-weight: bold;
+      }
+
+      td:nth-child(1)::before {
+        content: "Fecha";
+      }
+
+      td:nth-child(2)::before {
+        content: "Cupos";
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="back" onclick="volver()">⬅ Volver</div>
+
+  <h1>📅 Fechas Disponibles</h1>
+
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Cupos</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+</div>
+
+<script>
+
+const URL = "https://docs.google.com/spreadsheets/d/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYBsU/edit?usp=sharing";
+
+async function cargarDatos() {
+  const res = await fetch(URL);
+  const data = await res.json();
+
+  const tbody = document.querySelector("#tabla tbody");
+
+  data.forEach(item => {
+    const fila = `
+      <tr>
+        <td>${item["Fechas disponibles"]}</td>
+        <td>${item["Cupos"]}</td>
+      </tr>
+    `;
+    tbody.innerHTML += fila;
+  });
+}
+
+function volver() {
+  window.location.href = "index.html";
+}
+
+cargarDatos();
+
+</script>
+
+</body>
+</html>
