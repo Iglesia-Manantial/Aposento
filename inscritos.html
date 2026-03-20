@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscritos</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      margin: 0;
+      padding: 20px;
+      background: #f4f6f9;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      background: white;
+      border-radius: 10px;
+    }
+
+    li {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .total {
+      margin-top: 15px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .back {
+      margin-bottom: 20px;
+      display: inline-block;
+      cursor: pointer;
+      color: #007bff;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="back" onclick="volver()">⬅ Volver</div>
+
+  <h1>👥 Inscritos</h1>
+
+  <select id="sedeSelect">
+    <option value="">Selecciona una sede</option>
+  </select>
+
+  <ul id="lista"></ul>
+
+  <div class="total">
+    Total: <span id="total">0</span>
+  </div>
+
+</div>
+
+<script>
+
+const URL = "https://opensheet.elk.sh/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYBsU/Solicitud";
+
+let datos = [];
+
+async function cargarDatos() {
+  const res = await fetch(URL);
+  datos = await res.json();
+
+  // 🔹 Obtener sedes únicas
+  const sedes = [...new Set(datos.map(d => d["Asistencia"]))];
+
+  const select = document.getElementById("sedeSelect");
+
+  sedes.forEach(sede => {
+    if (sede) {
+      let option = document.createElement("option");
+      option.value = sede;
+      option.textContent = sede;
+      select.appendChild(option);
+    }
+  });
+}
+
+function filtrar() {
+  const sede = document.getElementById("sedeSelect").value;
+
+  const filtrados = datos.filter(d => d["Asistencia"] === sede);
+
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  filtrados.forEach(p => {
+    lista.innerHTML += `<li>${p["Nombre Completo"] || "Sin nombre"}</li>`;
+  });
+
+  document.getElementById("total").textContent = filtrados.length;
+}
+
+document.getElementById("sedeSelect").addEventListener("change", filtrar);
+
+function volver() {
+  window.location.href = "index.html";
+}
+
+cargarDatos();
+
+</script>
+
+</body>
+</html>
