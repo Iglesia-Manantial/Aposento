@@ -7,52 +7,75 @@
 
   <style>
     body {
-      font-family: Arial;
+      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 20px;
-      background: #f4f6f9;
+      background: #eef2f7;
     }
 
     .container {
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
+      padding: 20px;
     }
 
     h1 {
       text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
     }
 
     select {
       width: 100%;
-      padding: 10px;
-      margin: 20px 0;
-      border-radius: 8px;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      background: white;
+      padding: 12px;
       border-radius: 10px;
+      border: 1px solid #ddd;
+      margin-top: 10px;
     }
 
-    li {
+    .list {
+      margin-top: 15px;
+    }
+
+    .item {
       padding: 12px;
       border-bottom: 1px solid #eee;
     }
 
-    .total {
-      margin-top: 15px;
-      font-weight: bold;
+    .item:last-child {
+      border-bottom: none;
+    }
+
+    .badge {
+      background: #007bff;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+
+    .alert {
+      background: #fff3cd;
+      color: #856404;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 10px;
       text-align: center;
     }
 
     .back {
-      margin-bottom: 20px;
-      display: inline-block;
       cursor: pointer;
       color: #007bff;
+      margin-bottom: 15px;
+      display: inline-block;
     }
+
   </style>
 </head>
 
@@ -64,14 +87,22 @@
 
   <h1>👥 Inscritos</h1>
 
-  <select id="sedeSelect">
-    <option value="">Selecciona una sede</option>
-  </select>
+  <div class="card">
+    <label>Seleccionar sede</label>
+    <select id="sedeSelect">
+      <option value="">Todas</option>
+    </select>
+  </div>
 
-  <ul id="lista"></ul>
+  <div class="card">
+    <div style="display:flex; justify-content:space-between;">
+      <strong>Lista de personas</strong>
+      <span class="badge">Total: <span id="total">0</span></span>
+    </div>
 
-  <div class="total">
-    Total: <span id="total">0</span>
+    <div id="alertaDuplicados"></div>
+
+    <div class="list" id="lista"></div>
   </div>
 
 </div>
@@ -86,34 +117,72 @@ async function cargarDatos() {
   const res = await fetch(URL);
   datos = await res.json();
 
-  // 🔹 Obtener sedes únicas
   const sedes = [...new Set(datos.map(d => d["Asistencia"]))];
 
   const select = document.getElementById("sedeSelect");
 
-  sedes.forEach(sede => {
-    if (sede) {
+  sedes.forEach(s => {
+    if (s) {
       let option = document.createElement("option");
-      option.value = sede;
-      option.textContent = sede;
+      option.value = s;
+      option.textContent = s;
       select.appendChild(option);
     }
   });
+
+  filtrar();
 }
 
 function filtrar() {
   const sede = document.getElementById("sedeSelect").value;
 
-  const filtrados = datos.filter(d => d["Asistencia"] === sede);
+  let filtrados = datos;
 
+  if (sede) {
+    filtrados = datos.filter(d => d["Asistencia"] === sede);
+  }
+
+  // 🔥 CONTROL DE DUPLICADOS
+  let nombres = {};
+  let duplicados = 0;
+  let unicos = [];
+
+  filtrados.forEach(p => {
+    let nombre = (p["Nombre Completo"] || "").trim();
+
+    if (!nombre) return;
+
+    if (nombres[nombre]) {
+      duplicados++;
+    } else {
+      nombres[nombre] = true;
+      unicos.push(nombre);
+    }
+  });
+
+  // 🔹 Mostrar lista
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  filtrados.forEach(p => {
-    lista.innerHTML += `<li>${p["Nombre Completo"] || "Sin nombre"}</li>`;
+  unicos.forEach(n => {
+    lista.innerHTML += `<div class="item">${n}</div>`;
   });
 
-  document.getElementById("total").textContent = filtrados.length;
+  // 🔹 Totales
+  document.getElementById("total").textContent = unicos.length;
+
+  // 🔹 Alerta duplicados
+  const alerta = document.getElementById("alertaDuplicados");
+
+  if (duplicados > 0) {
+    alerta.innerHTML = `
+      <div class="alert">
+        ⚠️ ${duplicados} registros duplicados detectados
+      </div>
+    `;
+  } else {
+    alerta.innerHTML = "";
+  }
 }
 
 document.getElementById("sedeSelect").addEventListener("change", filtrar);
