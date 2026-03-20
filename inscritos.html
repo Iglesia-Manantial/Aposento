@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inscritos</title>
+<title>CRUD Inscritos</title>
 
 <style>
 body {
@@ -13,7 +13,7 @@ body {
 }
 
 .container {
-  max-width: 900px;
+  max-width: 1100px;
   margin: auto;
   padding: 20px;
 }
@@ -27,27 +27,31 @@ h1 {
   padding: 20px;
   border-radius: 15px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
 }
 
 input, select {
-  width: 100%;
   padding: 10px;
-  margin-top: 10px;
   border-radius: 8px;
   border: 1px solid #ddd;
+  width: 100%;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 15px;
 }
 
 th, td {
-  padding: 12px;
+  padding: 10px;
   border-bottom: 1px solid #eee;
-  text-align: left;
+  font-size: 14px;
 }
 
 th {
@@ -55,30 +59,19 @@ th {
   color: white;
 }
 
+tr:hover {
+  background: #f1f1f1;
+}
+
 .duplicate {
   background: #ffe5e5;
 }
 
-.btn {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btn-view {
-  background: #17a2b8;
+.badge {
+  background: #28a745;
   color: white;
-}
-
-.btn-delete {
-  background: #dc3545;
-  color: white;
-}
-
-.top-actions {
-  display: flex;
-  gap: 10px;
+  padding: 5px 10px;
+  border-radius: 20px;
 }
 
 .back {
@@ -96,28 +89,30 @@ th {
 
 <div class="back" onclick="volver()">⬅ Volver</div>
 
-<h1>👥 Gestión de Inscritos</h1>
+<h1>👥 CRUD Inscritos</h1>
 
 <div class="card">
-
-<div class="top-actions">
-  <select id="sedeSelect">
-    <option value="">Todas las sedes</option>
-  </select>
-
-  <input type="text" id="buscador" placeholder="Buscar nombre...">
-</div>
-
+  <div class="filters">
+    <select id="sede"></select>
+    <select id="fecha"></select>
+    <input type="text" id="buscar" placeholder="Buscar nombre o correo...">
+  </div>
 </div>
 
 <div class="card">
+
+<div style="margin-bottom:10px;">
+  <span class="badge">Total: <span id="total">0</span></span>
+</div>
 
 <table>
 <thead>
 <tr>
+  <th>Fecha Registro</th>
+  <th>Correo</th>
   <th>Nombre</th>
+  <th>Fecha Aposento</th>
   <th>Sede</th>
-  <th>Acciones</th>
 </tr>
 </thead>
 <tbody id="tabla"></tbody>
@@ -137,77 +132,86 @@ async function cargarDatos() {
   const res = await fetch(URL);
   datos = await res.json();
 
-  const sedes = [...new Set(datos.map(d => d["Asistencia"]))];
-
-  const select = document.getElementById("sedeSelect");
-
-  sedes.forEach(s => {
-    if (s) {
-      let option = document.createElement("option");
-      option.value = s;
-      option.textContent = s;
-      select.appendChild(option);
-    }
-  });
-
+  cargarFiltros();
   render();
 }
 
+function cargarFiltros() {
+
+  // 🔹 sedes únicas
+  let sedes = [...new Set(datos.map(d => d["Pastor De Sede O Localidad"]))];
+
+  let selectSede = document.getElementById("sede");
+  selectSede.innerHTML = `<option value="">Todas las sedes</option>`;
+
+  sedes.forEach(s => {
+    if (s) selectSede.innerHTML += `<option>${s}</option>`;
+  });
+
+  // 🔹 fechas únicas
+  let fechas = [...new Set(datos.map(d => d["Seleccione fecha de aposento"]))];
+
+  let selectFecha = document.getElementById("fecha");
+  selectFecha.innerHTML = `<option value="">Todas las fechas</option>`;
+
+  fechas.forEach(f => {
+    if (f) selectFecha.innerHTML += `<option>${f}</option>`;
+  });
+}
+
 function render() {
-  const sede = document.getElementById("sedeSelect").value;
-  const texto = document.getElementById("buscador").value.toLowerCase();
 
-  let filtrados = datos;
+  let sede = document.getElementById("sede").value;
+  let fecha = document.getElementById("fecha").value;
+  let texto = document.getElementById("buscar").value.toLowerCase();
 
-  if (sede) {
-    filtrados = filtrados.filter(d => d["Asistencia"] === sede);
-  }
+  let filtrados = datos.filter(d => {
 
-  if (texto) {
-    filtrados = filtrados.filter(d =>
-      (d["Nombre Completo"] || "").toLowerCase().includes(texto)
-    );
-  }
+    let cumpleSede = !sede || d["Pastor De Sede O Localidad"] === sede;
+    let cumpleFecha = !fecha || d["Seleccione fecha de aposento"] === fecha;
 
-  // detectar duplicados
+    let nombre = (d["Nombre Completo"] || "").toLowerCase();
+    let correo = (d["Dirección de correo electrónico"] || "").toLowerCase();
+
+    let cumpleTexto = nombre.includes(texto) || correo.includes(texto);
+
+    return cumpleSede && cumpleFecha && cumpleTexto;
+  });
+
+  // 🔥 duplicados por correo
   let contador = {};
   filtrados.forEach(d => {
-    let nombre = d["Nombre Completo"];
-    contador[nombre] = (contador[nombre] || 0) + 1;
+    let correo = d["Dirección de correo electrónico"];
+    contador[correo] = (contador[correo] || 0) + 1;
   });
 
   const tabla = document.getElementById("tabla");
   tabla.innerHTML = "";
 
   filtrados.forEach(d => {
-    const nombre = d["Nombre Completo"] || "Sin nombre";
-    const sede = d["Asistencia"] || "-";
 
-    const esDuplicado = contador[nombre] > 1;
+    let correo = d["Dirección de correo electrónico"] || "-";
+    let nombre = d["Nombre Completo"] || "-";
+
+    let esDuplicado = contador[correo] > 1;
 
     tabla.innerHTML += `
       <tr class="${esDuplicado ? 'duplicate' : ''}">
+        <td>${d["Marca temporal"] || "-"}</td>
+        <td>${correo}</td>
         <td>${nombre}</td>
-        <td>${sede}</td>
-        <td>
-          <button class="btn btn-view" onclick="ver('${nombre}')">Ver</button>
-          <button class="btn btn-delete" onclick="eliminar('${nombre}')">Eliminar</button>
-        </td>
+        <td>${d["Seleccione fecha de aposento"] || "-"}</td>
+        <td>${d["Pastor De Sede O Localidad"] || "-"}</td>
       </tr>
     `;
   });
+
+  document.getElementById("total").textContent = filtrados.length;
 }
 
-function ver(nombre) {
-  alert("Detalle de: " + nombre);
-}
-
-function eliminar(nombre) {
-  alert("⚠️ Aquí conectarías con Apps Script para eliminar:\n" + nombre);
-}
-
-document.getElementById("sedeSelect").addEventListener("change", render);
-document.getElementById("buscador").addEventListener("input", render);
+document.getElementById("sede").addEventListener("change", render);
+document.getElementById("fecha").addEventListener("change", render);
+document.getElementById("buscar").addEventListener("input", render);
 
 function volver() {
   window.location.href = "index.html";
