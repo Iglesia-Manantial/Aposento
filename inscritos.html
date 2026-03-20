@@ -1,109 +1,129 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inscritos</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscritos</title>
 
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      background: #eef2f7;
-    }
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #eef2f7;
+  margin: 0;
+}
 
-    .container {
-      max-width: 700px;
-      margin: auto;
-      padding: 20px;
-    }
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
 
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+h1 {
+  text-align: center;
+}
 
-    .card {
-      background: white;
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-      margin-bottom: 20px;
-    }
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
 
-    select {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      margin-top: 10px;
-    }
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
 
-    .list {
-      margin-top: 15px;
-    }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
 
-    .item {
-      padding: 12px;
-      border-bottom: 1px solid #eee;
-    }
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
 
-    .item:last-child {
-      border-bottom: none;
-    }
+th {
+  background: #007bff;
+  color: white;
+}
 
-    .badge {
-      background: #007bff;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-    }
+.duplicate {
+  background: #ffe5e5;
+}
 
-    .alert {
-      background: #fff3cd;
-      color: #856404;
-      padding: 10px;
-      border-radius: 10px;
-      margin-top: 10px;
-      text-align: center;
-    }
+.btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
 
-    .back {
-      cursor: pointer;
-      color: #007bff;
-      margin-bottom: 15px;
-      display: inline-block;
-    }
+.btn-view {
+  background: #17a2b8;
+  color: white;
+}
 
-  </style>
+.btn-delete {
+  background: #dc3545;
+  color: white;
+}
+
+.top-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.back {
+  cursor: pointer;
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <div class="back" onclick="volver()">⬅ Volver</div>
+<div class="back" onclick="volver()">⬅ Volver</div>
 
-  <h1>👥 Inscritos</h1>
+<h1>👥 Gestión de Inscritos</h1>
 
-  <div class="card">
-    <label>Seleccionar sede</label>
-    <select id="sedeSelect">
-      <option value="">Todas</option>
-    </select>
-  </div>
+<div class="card">
 
-  <div class="card">
-    <div style="display:flex; justify-content:space-between;">
-      <strong>Lista de personas</strong>
-      <span class="badge">Total: <span id="total">0</span></span>
-    </div>
+<div class="top-actions">
+  <select id="sedeSelect">
+    <option value="">Todas las sedes</option>
+  </select>
 
-    <div id="alertaDuplicados"></div>
+  <input type="text" id="buscador" placeholder="Buscar nombre...">
+</div>
 
-    <div class="list" id="lista"></div>
-  </div>
+</div>
+
+<div class="card">
+
+<table>
+<thead>
+<tr>
+  <th>Nombre</th>
+  <th>Sede</th>
+  <th>Acciones</th>
+</tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
+
+</div>
 
 </div>
 
@@ -130,62 +150,64 @@ async function cargarDatos() {
     }
   });
 
-  filtrar();
+  render();
 }
 
-function filtrar() {
+function render() {
   const sede = document.getElementById("sedeSelect").value;
+  const texto = document.getElementById("buscador").value.toLowerCase();
 
   let filtrados = datos;
 
   if (sede) {
-    filtrados = datos.filter(d => d["Asistencia"] === sede);
+    filtrados = filtrados.filter(d => d["Asistencia"] === sede);
   }
 
-  // 🔥 CONTROL DE DUPLICADOS
-  let nombres = {};
-  let duplicados = 0;
-  let unicos = [];
+  if (texto) {
+    filtrados = filtrados.filter(d =>
+      (d["Nombre Completo"] || "").toLowerCase().includes(texto)
+    );
+  }
 
-  filtrados.forEach(p => {
-    let nombre = (p["Nombre Completo"] || "").trim();
-
-    if (!nombre) return;
-
-    if (nombres[nombre]) {
-      duplicados++;
-    } else {
-      nombres[nombre] = true;
-      unicos.push(nombre);
-    }
+  // detectar duplicados
+  let contador = {};
+  filtrados.forEach(d => {
+    let nombre = d["Nombre Completo"];
+    contador[nombre] = (contador[nombre] || 0) + 1;
   });
 
-  // 🔹 Mostrar lista
-  const lista = document.getElementById("lista");
-  lista.innerHTML = "";
+  const tabla = document.getElementById("tabla");
+  tabla.innerHTML = "";
 
-  unicos.forEach(n => {
-    lista.innerHTML += `<div class="item">${n}</div>`;
-  });
+  filtrados.forEach(d => {
+    const nombre = d["Nombre Completo"] || "Sin nombre";
+    const sede = d["Asistencia"] || "-";
 
-  // 🔹 Totales
-  document.getElementById("total").textContent = unicos.length;
+    const esDuplicado = contador[nombre] > 1;
 
-  // 🔹 Alerta duplicados
-  const alerta = document.getElementById("alertaDuplicados");
-
-  if (duplicados > 0) {
-    alerta.innerHTML = `
-      <div class="alert">
-        ⚠️ ${duplicados} registros duplicados detectados
-      </div>
+    tabla.innerHTML += `
+      <tr class="${esDuplicado ? 'duplicate' : ''}">
+        <td>${nombre}</td>
+        <td>${sede}</td>
+        <td>
+          <button class="btn btn-view" onclick="ver('${nombre}')">Ver</button>
+          <button class="btn btn-delete" onclick="eliminar('${nombre}')">Eliminar</button>
+        </td>
+      </tr>
     `;
-  } else {
-    alerta.innerHTML = "";
-  }
+  });
 }
 
-document.getElementById("sedeSelect").addEventListener("change", filtrar);
+function ver(nombre) {
+  alert("Detalle de: " + nombre);
+}
+
+function eliminar(nombre) {
+  alert("⚠️ Aquí conectarías con Apps Script para eliminar:\n" + nombre);
+}
+
+document.getElementById("sedeSelect").addEventListener("change", render);
+document.getElementById("buscador").addEventListener("input", render);
 
 function volver() {
   window.location.href = "index.html";
