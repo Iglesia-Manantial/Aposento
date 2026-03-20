@@ -1,162 +1,35 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRUD Inscritos</title>
-
-<style>
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #eef2f7;
-  margin: 0;
-}
-
-.container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 20px;
-}
-
-h1 {
-  text-align: center;
-}
-
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 15px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.filters {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
-}
-
-input, select {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  width: 100%;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
-}
-
-th {
-  background: #007bff;
-  color: white;
-}
-
-tr:hover {
-  background: #f1f1f1;
-}
-
-.duplicate {
-  background: #ffe5e5;
-}
-
-.badge {
-  background: #28a745;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 20px;
-}
-
-.back {
-  cursor: pointer;
-  color: #007bff;
-  margin-bottom: 10px;
-}
-
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<div class="back" onclick="volver()">⬅ Volver</div>
-
-<h1>👥 CRUD Inscritos</h1>
-
-<div class="card">
-  <div class="filters">
-    <select id="sede"></select>
-    <select id="fecha"></select>
-    <input type="text" id="buscar" placeholder="Buscar nombre o correo...">
-  </div>
-</div>
-
-<div class="card">
-
-<div style="margin-bottom:10px;">
-  <span class="badge">Total: <span id="total">0</span></span>
-</div>
-
-<table>
-<thead>
-<tr>
-  <th>Fecha Registro</th>
-  <th>Correo</th>
-  <th>Nombre</th>
-  <th>Fecha Aposento</th>
-  <th>Sede</th>
-</tr>
-</thead>
-<tbody id="tabla"></tbody>
-</table>
-
-</div>
-
-</div>
-
 <script>
 
 const URL = "https://opensheet.elk.sh/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYBsU/Solicitud";
 
 let datos = [];
 
-async function cargarDatos() {
+async function cargarFiltros() {
   const res = await fetch(URL);
   datos = await res.json();
 
-  cargarFiltros();
-  render();
-}
-
-function cargarFiltros() {
-
-  // 🔹 sedes únicas
   let sedes = [...new Set(datos.map(d => d["Pastor De Sede O Localidad"]))];
 
-  let selectSede = document.getElementById("sede");
-  selectSede.innerHTML = `<option value="">Todas las sedes</option>`;
+  let select = document.getElementById("sede");
+  select.innerHTML = `<option value="">Seleccione una sede</option>`;
 
   sedes.forEach(s => {
-    if (s) selectSede.innerHTML += `<option>${s}</option>`;
+    if (s) select.innerHTML += `<option>${s}</option>`;
   });
+}
 
-  // 🔹 fechas únicas
-  let fechas = [...new Set(datos.map(d => d["Seleccione fecha de aposento"]))];
+// 🔥 SOLO se ejecuta cuando el usuario selecciona sede
+function activarBusqueda() {
 
-  let selectFecha = document.getElementById("fecha");
-  selectFecha.innerHTML = `<option value="">Todas las fechas</option>`;
+  let sede = document.getElementById("sede").value;
 
-  fechas.forEach(f => {
-    if (f) selectFecha.innerHTML += `<option>${f}</option>`;
-  });
+  if (!sede) {
+    document.getElementById("tabla").innerHTML = "";
+    document.getElementById("total").textContent = 0;
+    return;
+  }
+
+  render();
 }
 
 function render() {
@@ -167,7 +40,7 @@ function render() {
 
   let filtrados = datos.filter(d => {
 
-    let cumpleSede = !sede || d["Pastor De Sede O Localidad"] === sede;
+    let cumpleSede = d["Pastor De Sede O Localidad"] === sede;
     let cumpleFecha = !fecha || d["Seleccione fecha de aposento"] === fecha;
 
     let nombre = (d["Nombre Completo"] || "").toLowerCase();
@@ -178,7 +51,7 @@ function render() {
     return cumpleSede && cumpleFecha && cumpleTexto;
   });
 
-  // 🔥 duplicados por correo
+  // duplicados por correo
   let contador = {};
   filtrados.forEach(d => {
     let correo = d["Dirección de correo electrónico"];
@@ -191,7 +64,6 @@ function render() {
   filtrados.forEach(d => {
 
     let correo = d["Dirección de correo electrónico"] || "-";
-    let nombre = d["Nombre Completo"] || "-";
 
     let esDuplicado = contador[correo] > 1;
 
@@ -199,7 +71,7 @@ function render() {
       <tr class="${esDuplicado ? 'duplicate' : ''}">
         <td>${d["Marca temporal"] || "-"}</td>
         <td>${correo}</td>
-        <td>${nombre}</td>
+        <td>${d["Nombre Completo"] || "-"}</td>
         <td>${d["Seleccione fecha de aposento"] || "-"}</td>
         <td>${d["Pastor De Sede O Localidad"] || "-"}</td>
       </tr>
@@ -209,17 +81,11 @@ function render() {
   document.getElementById("total").textContent = filtrados.length;
 }
 
-document.getElementById("sede").addEventListener("change", render);
+// eventos
+document.getElementById("sede").addEventListener("change", activarBusqueda);
 document.getElementById("fecha").addEventListener("change", render);
 document.getElementById("buscar").addEventListener("input", render);
 
-function volver() {
-  window.location.href = "index.html";
-}
-
-cargarDatos();
+cargarFiltros();
 
 </script>
-
-</body>
-</html>
