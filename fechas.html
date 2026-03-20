@@ -50,36 +50,6 @@
       cursor: pointer;
       color: #007bff;
     }
-
-    @media (max-width: 600px) {
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-
-      tr {
-        margin-bottom: 15px;
-      }
-
-      td {
-        padding-left: 50%;
-        position: relative;
-      }
-
-      td::before {
-        position: absolute;
-        left: 10px;
-        top: 10px;
-        font-weight: bold;
-      }
-
-      td:nth-child(1)::before {
-        content: "Fecha";
-      }
-
-      td:nth-child(2)::before {
-        content: "Cupos";
-      }
-    }
   </style>
 </head>
 
@@ -105,23 +75,32 @@
 
 <script>
 
-const URL = "https://docs.google.com/spreadsheets/d/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYBsU/edit?usp=sharing";
+// 🔥 ESTA ES TU URL CORRECTA
+const URL = "https://opensheet.elk.sh/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYBsU/Opciones";
 
 async function cargarDatos() {
-  const res = await fetch(URL);
-  const data = await res.json();
+  try {
+    const res = await fetch(URL);
+    const data = await res.json();
 
-  const tbody = document.querySelector("#tabla tbody");
+    const tbody = document.querySelector("#tabla tbody");
 
-  data.forEach(item => {
-    const fila = `
-      <tr>
-        <td>${item["Fechas disponibles"]}</td>
-        <td>${item["Cupos"]}</td>
-      </tr>
-    `;
-    tbody.innerHTML += fila;
-  });
+    tbody.innerHTML = "";
+
+    data.forEach(item => {
+      const fila = `
+        <tr>
+          <td>${item["Fechas disponibles"] || "-"}</td>
+          <td>${item["Cupos"] || "-"}</td>
+        </tr>
+      `;
+      tbody.innerHTML += fila;
+    });
+
+  } catch (error) {
+    console.error("Error cargando datos:", error);
+    alert("Error cargando datos. Verifica permisos del Sheet.");
+  }
 }
 
 function volver() {
