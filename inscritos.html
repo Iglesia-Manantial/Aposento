@@ -180,12 +180,12 @@ async function init() {
     // llenar filtro de fechas
     let fechas = [...new Set(datos.map(d => d["Seleccione fecha de aposento"]))];
 
-    let select = document.getElementById("fecha");
-    select.innerHTML = `<option value="">Filtrar por fecha</option>`;
+let select = document.getElementById("fecha");
+select.innerHTML = `<option value="">Filtrar por fecha</option>`;
 
-    fechas.forEach(f => {
-      if (f) select.innerHTML += `<option>${f}</option>`;
-    });
+fechas.forEach(f => {
+  if (f) select.innerHTML += `<option>${f}</option>`;
+});
 
   } catch (error) {
     console.error("Error:", error);
