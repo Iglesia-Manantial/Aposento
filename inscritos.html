@@ -150,7 +150,12 @@ const URL = "https://opensheet.elk.sh/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYB
 
 let datos = [];
 
-// 🔥 ordenar fecha
+// 🔥 detectar nombre aunque tenga espacios raros
+function obtenerNombre(d) {
+  return d["Nombre Completo"] || d["Nombre Completo "] || d["Nombre completo"] || "-";
+}
+
+// 🔥 convertir fecha para ordenar
 function convertirFecha(texto) {
   const meses = {
     "enero":0,"febrero":1,"marzo":2,"abril":3,
@@ -164,27 +169,36 @@ function convertirFecha(texto) {
   return new Date(2026, meses[match[2]], parseInt(match[1]));
 }
 
-// cargar filtros
+// 🔥 cargar datos iniciales
 async function init() {
-  const res = await fetch(URL);
-  datos = await res.json();
+  try {
+    const res = await fetch(URL);
+    datos = await res.json();
 
-  let fechas = [...new Set(datos.map(d => d["Seleccione fecha de aposento"]))];
+    console.log("Datos cargados:", datos[0]); // 👈 para debug
 
-  let select = document.getElementById("fecha");
-  select.innerHTML = `<option value="">Filtrar por fecha</option>`;
+    // llenar filtro de fechas
+    let fechas = [...new Set(datos.map(d => d["Seleccione fecha de aposento"]))];
 
-  fechas.forEach(f => {
-    if (f) select.innerHTML += `<option>${f}</option>`;
-  });
+    let select = document.getElementById("fecha");
+    select.innerHTML = `<option value="">Filtrar por fecha</option>`;
+
+    fechas.forEach(f => {
+      if (f) select.innerHTML += `<option>${f}</option>`;
+    });
+
+  } catch (error) {
+    console.error("Error:", error);
+  }
 }
 
+// 🔥 render principal
 function render() {
 
-  let correo = document.getElementById("buscar").value.toLowerCase();
+  let correoBuscar = document.getElementById("buscar").value.toLowerCase();
   let fecha = document.getElementById("fecha").value;
 
-  if (!correo && !fecha) {
+  if (!correoBuscar && !fecha) {
     document.getElementById("mensaje").style.display = "block";
     document.getElementById("tabla").innerHTML = "";
     document.getElementById("cards").innerHTML = "";
@@ -195,17 +209,26 @@ function render() {
 
   let filtrados = datos.filter(d => {
 
-    let c = (d["Dirección de correo electrónico"] || "").toLowerCase();
+    let correo = (d["Dirección de correo electrónico"] || "").toLowerCase();
 
-    let cumpleCorreo = !correo || c.includes(correo);
+    let cumpleCorreo = !correoBuscar || correo.includes(correoBuscar);
     let cumpleFecha = !fecha || d["Seleccione fecha de aposento"] === fecha;
 
     return cumpleCorreo && cumpleFecha;
   });
 
+  // 🔥 detectar duplicados
+  let contador = {};
+  filtrados.forEach(d => {
+    let correo = d["Dirección de correo electrónico"];
+    if (correo) {
+      contador[correo] = (contador[correo] || 0) + 1;
+    }
+  });
+
   // 🔥 ordenar por nombre
   filtrados.sort((a,b) => {
-    return (a["Nombre Completo"] || "").localeCompare(b["Nombre Completo"] || "");
+    return obtenerNombre(a).localeCompare(obtenerNombre(b));
   });
 
   // 🔥 si filtra por fecha → ordenar por fecha
@@ -223,27 +246,35 @@ function render() {
 
   filtrados.forEach(d => {
 
-    let fila = `
-      <tr>
+    let correo = d["Dirección de correo electrónico"] || "-";
+    let nombre = obtenerNombre(d);
+    let duplicado = contador[correo] > 1;
+
+    // 🖥️ tabla
+    tabla.innerHTML += `
+      <tr style="${duplicado ? 'background:#ffe5e5' : ''}">
         <td>${d["Marca temporal"] || "-"}</td>
-        <td>${d["Dirección de correo electrónico"] || "-"}</td>
-        <td>${d["Nombre Completo"] || "-"}</td>
+        <td>${correo}</td>
+        <td>${nombre}</td>
         <td>${d["Seleccione fecha de aposento"] || "-"}</td>
       </tr>
     `;
 
-    tabla.innerHTML += fila;
-
-    // 📱 card
+    // 📱 cards
     cards.innerHTML += `
-      <div class="card-item">
-        <b>${d["Nombre Completo"] || "-"}</b><br>
-        📧 ${d["Dirección de correo electrónico"]}<br>
+      <div class="card-item" style="${duplicado ? 'border:2px solid red;' : ''}">
+        <b>${nombre}</b><br>
+        📧 ${correo}<br>
         📅 ${d["Seleccione fecha de aposento"]}<br>
         🕒 ${d["Marca temporal"]}
+        ${duplicado ? '<br><span style="color:red;">⚠ Duplicado</span>' : ''}
       </div>
     `;
   });
+
+  // 🔥 mostrar cantidad duplicados en consola
+  let duplicadosTotal = Object.values(contador).filter(c => c > 1).length;
+  console.log("Correos duplicados:", duplicadosTotal);
 
 }
 
