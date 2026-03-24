@@ -175,24 +175,28 @@ async function init() {
     const res = await fetch(URL);
     datos = await res.json();
 
-    console.log("Datos cargados:", datos[0]); // 👈 para debug
+    console.log("Datos cargados:", datos[0]);
 
-    // llenar filtro de fechas
+    // 🔥 obtener fechas únicas
     let fechas = [...new Set(datos.map(d => d["Seleccione fecha de aposento"]))];
 
-// 🔥 ORDENAR FECHAS CORRECTAMENTE
-fechas = fechas
-  .filter(f => f) // quitar vacíos
-  .sort((a, b) => convertirFecha(a) - convertirFecha(b));
+    // 🔥 limpiar + ordenar
+    fechas = fechas
+      .filter(f => f)
+      .sort((a, b) => convertirFecha(a.trim()) - convertirFecha(b.trim()));
 
-// 🔥 pintar select ordenado
-let select = document.getElementById("fecha");
-select.innerHTML = `<option value="">Filtrar por fecha</option>`;
+    // 🔥 pintar select
+    let select = document.getElementById("fecha");
+    select.innerHTML = `<option value="">Filtrar por fecha</option>`;
 
-fechas.forEach(f => {
-  select.innerHTML += `<option value="${f}">${f}</option>`;
-});
+    fechas.forEach(f => {
+      select.innerHTML += `<option value="${f}">${f}</option>`;
+    });
 
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
 
 // 🔥 render principal
 function render() {
@@ -274,12 +278,11 @@ function render() {
     `;
   });
 
-  // 🔥 mostrar cantidad duplicados en consola
   let duplicadosTotal = Object.values(contador).filter(c => c > 1).length;
   console.log("Correos duplicados:", duplicadosTotal);
-
 }
 
+// 🔥 eventos
 document.addEventListener("DOMContentLoaded", () => {
   init();
 
@@ -292,6 +295,7 @@ function volver() {
 }
 
 </script>
+
 
 </body>
 </html>
