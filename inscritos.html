@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRUD Inscritos</title>
+<title>Inscritos</title>
 
-<!-- evita error favicon -->
 <link rel="icon" href="data:,">
 
 <style>
+
 body {
   font-family: 'Segoe UI', sans-serif;
   background: #eef2f7;
@@ -18,7 +18,7 @@ body {
 .container {
   max-width: 1100px;
   margin: auto;
-  padding: 20px;
+  padding: 15px;
 }
 
 h1 {
@@ -27,15 +27,15 @@ h1 {
 
 .card {
   background: white;
-  padding: 20px;
-  border-radius: 15px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
 }
 
 .filters {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
@@ -46,9 +46,14 @@ input, select {
   width: 100%;
 }
 
+.table-container {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
 th, td {
@@ -62,19 +67,8 @@ th {
   color: white;
 }
 
-tr:hover {
-  background: #f1f1f1;
-}
-
-.duplicate {
-  background: #ffe5e5;
-}
-
-.badge {
-  background: #28a745;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 20px;
+.card-item {
+  display: none;
 }
 
 .back {
@@ -89,6 +83,23 @@ tr:hover {
   color: #666;
 }
 
+/* 📱 MODO CELULAR */
+@media (max-width: 768px) {
+
+  table {
+    display: none;
+  }
+
+  .card-item {
+    display: block;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+}
+
 </style>
 </head>
 
@@ -98,26 +109,22 @@ tr:hover {
 
 <div class="back" onclick="volver()">⬅ Volver</div>
 
-<h1>👥 CRUD Inscritos</h1>
+<h1>👥 Inscritos</h1>
 
 <div class="card">
   <div class="filters">
-    <select id="sede"></select>
+    <input type="text" id="buscar" placeholder="Buscar por correo...">
     <select id="fecha"></select>
-    <input type="text" id="buscar" placeholder="Buscar nombre o correo...">
   </div>
 </div>
 
 <div class="card">
 
-<div style="margin-bottom:10px;">
-  <span class="badge">Total: <span id="total">0</span></span>
-</div>
-
 <div id="mensaje" class="mensaje">
-  Selecciona una sede para ver los datos
+  Busca por correo o selecciona una fecha
 </div>
 
+<div class="table-container">
 <table>
 <thead>
 <tr>
@@ -125,11 +132,13 @@ tr:hover {
   <th>Correo</th>
   <th>Nombre</th>
   <th>Fecha Aposento</th>
-  <th>Sede</th>
 </tr>
 </thead>
 <tbody id="tabla"></tbody>
 </table>
+</div>
+
+<div id="cards"></div>
 
 </div>
 
@@ -141,108 +150,108 @@ const URL = "https://opensheet.elk.sh/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYB
 
 let datos = [];
 
-// 🔹 cargar todo pero NO mostrar aún
-async function cargarFiltros() {
-  try {
-    const res = await fetch(URL);
-    datos = await res.json();
+// 🔥 ordenar fecha
+function convertirFecha(texto) {
+  const meses = {
+    "enero":0,"febrero":1,"marzo":2,"abril":3,
+    "mayo":4,"junio":5,"julio":6,"agosto":7,
+    "septiembre":8,"octubre":9,"noviembre":10,"diciembre":11
+  };
 
-    // sedes
-    let sedes = [...new Set(datos.map(d => d["Pastor De Sede O Localidad"]))];
+  let match = (texto || "").toLowerCase().match(/(\d+)\s+de\s+(\w+)/);
+  if (!match) return new Date(9999,0,1);
 
-    let selectSede = document.getElementById("sede");
-    selectSede.innerHTML = `<option value="">Seleccione una sede</option>`;
-
-    sedes.forEach(s => {
-      if (s) selectSede.innerHTML += `<option>${s}</option>`;
-    });
-
-    // fechas
-    let fechas = [...new Set(datos.map(d => d["Seleccione fecha de aposento"]))];
-
-    let selectFecha = document.getElementById("fecha");
-    selectFecha.innerHTML = `<option value="">Todas las fechas</option>`;
-
-    fechas.forEach(f => {
-      if (f) selectFecha.innerHTML += `<option>${f}</option>`;
-    });
-
-  } catch (error) {
-    console.error("Error cargando datos:", error);
-  }
+  return new Date(2026, meses[match[2]], parseInt(match[1]));
 }
 
-// 🔥 solo cuando selecciona sede
-function activarBusqueda() {
-  let sede = document.getElementById("sede").value;
+// cargar filtros
+async function init() {
+  const res = await fetch(URL);
+  datos = await res.json();
 
-  if (!sede) {
-    document.getElementById("tabla").innerHTML = "";
-    document.getElementById("total").textContent = 0;
+  let fechas = [...new Set(datos.map(d => d["Seleccione fecha de aposento"]))];
+
+  let select = document.getElementById("fecha");
+  select.innerHTML = `<option value="">Filtrar por fecha</option>`;
+
+  fechas.forEach(f => {
+    if (f) select.innerHTML += `<option>${f}</option>`;
+  });
+}
+
+function render() {
+
+  let correo = document.getElementById("buscar").value.toLowerCase();
+  let fecha = document.getElementById("fecha").value;
+
+  if (!correo && !fecha) {
     document.getElementById("mensaje").style.display = "block";
+    document.getElementById("tabla").innerHTML = "";
+    document.getElementById("cards").innerHTML = "";
     return;
   }
 
   document.getElementById("mensaje").style.display = "none";
 
-  render();
-}
-
-function render() {
-
-  let sede = document.getElementById("sede").value;
-  let fecha = document.getElementById("fecha").value;
-  let texto = document.getElementById("buscar").value.toLowerCase();
-
   let filtrados = datos.filter(d => {
 
-    let cumpleSede = d["Pastor De Sede O Localidad"] === sede;
+    let c = (d["Dirección de correo electrónico"] || "").toLowerCase();
+
+    let cumpleCorreo = !correo || c.includes(correo);
     let cumpleFecha = !fecha || d["Seleccione fecha de aposento"] === fecha;
 
-    let nombre = (d["Nombre Completo"] || "").toLowerCase();
-    let correo = (d["Dirección de correo electrónico"] || "").toLowerCase();
-
-    let cumpleTexto = nombre.includes(texto) || correo.includes(texto);
-
-    return cumpleSede && cumpleFecha && cumpleTexto;
+    return cumpleCorreo && cumpleFecha;
   });
 
-  // 🔥 duplicados por correo
-  let contador = {};
-  filtrados.forEach(d => {
-    let correo = d["Dirección de correo electrónico"];
-    contador[correo] = (contador[correo] || 0) + 1;
+  // 🔥 ordenar por nombre
+  filtrados.sort((a,b) => {
+    return (a["Nombre Completo"] || "").localeCompare(b["Nombre Completo"] || "");
   });
+
+  // 🔥 si filtra por fecha → ordenar por fecha
+  if (fecha) {
+    filtrados.sort((a,b) => {
+      return convertirFecha(a["Seleccione fecha de aposento"]) - convertirFecha(b["Seleccione fecha de aposento"]);
+    });
+  }
 
   const tabla = document.getElementById("tabla");
+  const cards = document.getElementById("cards");
+
   tabla.innerHTML = "";
+  cards.innerHTML = "";
 
   filtrados.forEach(d => {
 
-    let correo = d["Dirección de correo electrónico"] || "-";
-    let esDuplicado = contador[correo] > 1;
-
-    tabla.innerHTML += `
-      <tr class="${esDuplicado ? 'duplicate' : ''}">
+    let fila = `
+      <tr>
         <td>${d["Marca temporal"] || "-"}</td>
-        <td>${correo}</td>
+        <td>${d["Dirección de correo electrónico"] || "-"}</td>
         <td>${d["Nombre Completo"] || "-"}</td>
         <td>${d["Seleccione fecha de aposento"] || "-"}</td>
-        <td>${d["Pastor De Sede O Localidad"] || "-"}</td>
       </tr>
+    `;
+
+    tabla.innerHTML += fila;
+
+    // 📱 card
+    cards.innerHTML += `
+      <div class="card-item">
+        <b>${d["Nombre Completo"] || "-"}</b><br>
+        📧 ${d["Dirección de correo electrónico"]}<br>
+        📅 ${d["Seleccione fecha de aposento"]}<br>
+        🕒 ${d["Marca temporal"]}
+      </div>
     `;
   });
 
-  document.getElementById("total").textContent = filtrados.length;
 }
 
-// eventos seguros
-document.addEventListener("DOMContentLoaded", function() {
-  document.getElementById("sede").addEventListener("change", activarBusqueda);
-  document.getElementById("fecha").addEventListener("change", render);
-  document.getElementById("buscar").addEventListener("input", render);
+document.addEventListener("DOMContentLoaded", () => {
+  init();
 
-  cargarFiltros();
+  document.getElementById("buscar").addEventListener("input", render);
+  document.getElementById("fecha").addEventListener("change", render);
 });
 
 function volver() {
