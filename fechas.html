@@ -1,105 +1,168 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fechas Disponibles</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fechas Disponibles</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      margin: 0;
-      padding: 20px;
-      background: #f4f6f9;
-    }
+<link rel="icon" href="data:,">
 
-    h1 {
-      text-align: center;
-    }
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #eef2f7;
+}
 
-    .container {
-      max-width: 800px;
-      margin: auto;
-    }
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-    }
+h1 {
+  text-align: center;
+}
 
-    th, td {
-      padding: 12px;
-      text-align: left;
-    }
+.back {
+  cursor: pointer;
+  color: #007bff;
+  margin-bottom: 15px;
+  display: inline-block;
+}
 
-    th {
-      background: #007bff;
-      color: white;
-    }
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
 
-    tr:nth-child(even) {
-      background: #f2f2f2;
-    }
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-    .back {
-      margin-bottom: 20px;
-      display: inline-block;
-      cursor: pointer;
-      color: #007bff;
-    }
-  </style>
+.fecha {
+  font-weight: bold;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 12px;
+}
+
+.disponible { background: #28a745; }
+.pocos { background: #ffc107; color: black; }
+.lleno { background: #dc3545; }
+
+.mensaje {
+  text-align: center;
+  color: #777;
+  margin-top: 20px;
+}
+
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <div class="back" onclick="volver()">⬅ Volver</div>
+<div class="back" onclick="volver()">⬅ Volver</div>
 
-  <h1>📅 Fechas Disponibles</h1>
+<h1>📅 Fechas Disponibles</h1>
 
-  <table id="tabla">
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>Cupos</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<div id="lista" class="grid"></div>
+
+<div id="mensaje" class="mensaje">Cargando fechas...</div>
 
 </div>
 
 <script>
 
-// 🔥 ESTA ES TU URL CORRECTA
 const URL = "https://opensheet.elk.sh/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYBsU/Opciones";
+
+// 🔥 convertir texto a fecha para ordenar
+function convertirFecha(texto) {
+
+  if (!texto) return new Date(9999,0,1);
+
+  const meses = {
+    "enero":0,"febrero":1,"marzo":2,"abril":3,
+    "mayo":4,"junio":5,"julio":6,"agosto":7,
+    "septiembre":8,"octubre":9,"noviembre":10,"diciembre":11
+  };
+
+  let match = texto.toLowerCase().match(/(\d+)\s+de\s+(\w+)/);
+
+  if (!match) return new Date(9999,0,1);
+
+  let dia = parseInt(match[1]);
+  let mes = meses[match[2]] ?? 0;
+
+  return new Date(2026, mes, dia);
+}
+
+function estadoCupos(cupos) {
+  let n = parseInt(cupos);
+
+  if (isNaN(n)) return {texto: "Sin info", clase: "pocos"};
+
+  if (n <= 0) return {texto: "Lleno", clase: "lleno"};
+  if (n <= 5) return {texto: "Pocos cupos", clase: "pocos"};
+  return {texto: "Disponible", clase: "disponible"};
+}
 
 async function cargarDatos() {
   try {
     const res = await fetch(URL);
-    const data = await res.json();
+    let data = await res.json();
 
-    const tbody = document.querySelector("#tabla tbody");
+    // 🔥 ordenar por fecha
+    data.sort((a, b) => {
+      return convertirFecha(a["Fechas disponibles"]) - convertirFecha(b["Fechas disponibles"]);
+    });
 
-    tbody.innerHTML = "";
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+
+    if (data.length === 0) {
+      document.getElementById("mensaje").innerText = "No hay fechas disponibles";
+      return;
+    }
+
+    document.getElementById("mensaje").style.display = "none";
 
     data.forEach(item => {
-      const fila = `
-        <tr>
-          <td>${item["Fechas disponibles"] || "-"}</td>
-          <td>${item["Cupos"] || "-"}</td>
-        </tr>
+
+      let fecha = item["Fechas disponibles"] || "Sin fecha";
+      let cupos = item["Cupos"] || "0";
+
+      let estado = estadoCupos(cupos);
+
+      lista.innerHTML += `
+        <div class="card">
+          <div>
+            <div class="fecha">${fecha}</div>
+            <div>Cupos: ${cupos}</div>
+          </div>
+          <div class="badge ${estado.clase}">
+            ${estado.texto}
+          </div>
+        </div>
       `;
-      tbody.innerHTML += fila;
     });
 
   } catch (error) {
-    console.error("Error cargando datos:", error);
-    alert("Error cargando datos. Verifica permisos del Sheet.");
+    console.error(error);
+    document.getElementById("mensaje").innerText = "Error cargando datos";
   }
 }
 
