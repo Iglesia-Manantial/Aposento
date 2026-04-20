@@ -3,103 +3,128 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inscritos</title>
+<title>Inscritos - Visión</title>
 
 <link rel="icon" href="data:,">
 
 <style>
-
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #eef2f7;
-  margin: 0;
-}
-
-.container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 15px;
-}
-
-h1 {
-  text-align: center;
-}
-
-.card {
-  background: white;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 15px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-}
-
-.filters {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
-}
-
-input, select {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  width: 100%;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 700px;
-}
-
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
-}
-
-th {
-  background: #007bff;
-  color: white;
-}
-
-.card-item {
-  display: none;
-}
-
-.back {
-  cursor: pointer;
-  color: #007bff;
-  margin-bottom: 10px;
-}
-
-.mensaje {
-  text-align: center;
-  margin-top: 20px;
-  color: #666;
-}
-
-/* 📱 MODO CELULAR */
-@media (max-width: 768px) {
-
-  table {
-    display: none;
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #eef2f7;
+    margin: 0;
+    color: #333;
   }
 
-  .card-item {
-    display: block;
+  .container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 15px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #2c3e50;
+  }
+
+  .card {
     background: white;
     padding: 15px;
     border-radius: 12px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
   }
 
-}
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
 
+  input, select {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+  }
+
+  input:focus, select:focus {
+    border-color: #007bff;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+  }
+
+  th, td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  th {
+    background: #007bff;
+    color: white;
+    position: sticky;
+    top: 0;
+  }
+
+  .card-item {
+    display: none;
+  }
+
+  .back {
+    cursor: pointer;
+    color: #007bff;
+    margin-bottom: 15px;
+    display: inline-block;
+    font-weight: bold;
+  }
+
+  .mensaje {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+    font-style: italic;
+  }
+
+  .badge-duplicado {
+    background: #ff4d4d;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+  }
+
+  /* 📱 MODO CELULAR */
+  @media (max-width: 768px) {
+    .filters {
+      grid-template-columns: 1fr;
+    }
+    
+    table {
+      display: none;
+    }
+
+    .card-item {
+      display: block;
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      border-left: 5px solid #007bff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+  }
 </style>
 </head>
 
@@ -107,15 +132,17 @@ th {
 
 <div class="container">
 
-<div class="back" onclick="volver()">⬅ Volver</div>
+<div class="back" onclick="volver()">⬅ Volver al inicio</div>
 
-<h1>👥 Inscritos</h1>
+<h1>👥 Listado de Inscritos</h1>
 
 <div class="card">
   <div class="filters">
-    <input type="text" id="buscar" placeholder="Buscar por correo...">
+    <input type="text" id="buscar" placeholder="🔍 Buscar por correo...">
 
-    <select id="fecha"></select>
+    <select id="fecha">
+      <option value="">Cargando fechas...</option>
+    </select>
 
     <select id="funcion">
       <option value="">Filtrar por cargo</option>
@@ -136,18 +163,18 @@ th {
 <div class="card">
 
 <div id="mensaje" class="mensaje">
-  Busca por correo, fecha o cargo
+  Por favor, ingresa un correo o selecciona un filtro para ver los resultados.
 </div>
 
 <div class="table-container">
-<table>
+<table id="tabla-datos" style="display: none;">
 <thead>
 <tr>
   <th>Fecha Registro</th>
   <th>Correo</th>
   <th>Nombre</th>
   <th>Fecha Aposento</th>
-  <th>Cargo</th>
+  <th>Cargo / Función</th>
 </tr>
 </thead>
 <tbody id="tabla"></tbody>
@@ -166,20 +193,21 @@ const URL = "https://opensheet.elk.sh/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYB
 
 let datos = [];
 
-// 🔥 nombre
+// 🔥 Obtener nombre dinámicamente
 function obtenerNombre(d) {
-  return d["Nombre Completo"] || d["Nombre Completo "] || d["Nombre completo"] || "-";
+  return d["Nombre Completo"] || d["Nombre Completo "] || d["Nombre completo"] || d["Nombre"] || "-";
 }
 
-// 🔥 cargo
+// 🔥 Obtener cargo dinámicamente (Columna I - Texto Largo)
 function obtenerFuncion(d) {
-  return d["Función que desarrolla en la visión de grupos de cuidado (Nombre de líder/supervisor respectivo):"] 
-      || d["Función que desarrolla en la visión de grupos de cuidado (Nombre de líder/supervisor respectivo):    "] 
-      || "-";
+  // Buscamos cualquier llave que empiece con "Función que desarrolla" para evitar errores de espacios
+  const llave = Object.keys(d).find(k => k.trim().toLowerCase().startsWith("función que desarrolla"));
+  return d[llave] || "-";
 }
 
-// 🔥 convertir fecha
+// 🔥 Convertir fecha para ordenar (Formato: "15 de mayo")
 function convertirFecha(texto) {
+  if (!texto) return new Date(9999,0,1);
   const meses = {
     "enero":0,"febrero":1,"marzo":2,"abril":3,
     "mayo":4,"junio":5,"julio":6,"agosto":7,
@@ -192,119 +220,132 @@ function convertirFecha(texto) {
   return new Date(2026, meses[match[2]], parseInt(match[1]));
 }
 
-// 🔥 init
+// 🔥 Inicialización
 async function init() {
   try {
     const res = await fetch(URL);
     datos = await res.json();
 
+    // Extraer y limpiar fechas únicas para el select
     let fechas = [...new Set(datos.map(d => d["Seleccione fecha de aposento"]))];
-
     fechas = fechas
-      .filter(f => f)
+      .filter(f => f && f.trim() !== "")
       .sort((a, b) => convertirFecha(a.trim()) - convertirFecha(b.trim()));
 
     let select = document.getElementById("fecha");
     select.innerHTML = `<option value="">Filtrar por fecha</option>`;
-
     fechas.forEach(f => {
       select.innerHTML += `<option value="${f}">${f}</option>`;
     });
 
+    console.log("Datos cargados correctamente");
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error cargando datos:", error);
+    document.getElementById("mensaje").innerText = "Error al conectar con la base de datos.";
   }
 }
 
-// 🔥 render
+// 🔥 Renderizado de resultados
 function render() {
+  let correoBuscar = document.getElementById("buscar").value.toLowerCase().trim();
+  let fechaSeleccionada = document.getElementById("fecha").value;
+  let funcionBuscar = document.getElementById("funcion").value.toLowerCase();
 
-  let correoBuscar = document.getElementById("buscar").value.toLowerCase();
-  let fecha = document.getElementById("fecha").value;
-  let funcionBuscar = document.getElementById("funcion").value;
+  const contenedorTabla = document.getElementById("tabla-datos");
+  const tablaBody = document.getElementById("tabla");
+  const cardsContainer = document.getElementById("cards");
+  const mensaje = document.getElementById("mensaje");
 
-  if (!correoBuscar && !fecha && !funcionBuscar) {
-    document.getElementById("mensaje").style.display = "block";
-    document.getElementById("tabla").innerHTML = "";
-    document.getElementById("cards").innerHTML = "";
+  // Si no hay filtros aplicados, limpiar todo
+  if (!correoBuscar && !fechaSeleccionada && !funcionBuscar) {
+    mensaje.style.display = "block";
+    contenedorTabla.style.display = "none";
+    tablaBody.innerHTML = "";
+    cardsContainer.innerHTML = "";
     return;
   }
 
-  document.getElementById("mensaje").style.display = "none";
-
+  // Filtrado lógico
   let filtrados = datos.filter(d => {
-
     let correo = (d["Dirección de correo electrónico"] || "").toLowerCase();
-    let funcion = obtenerFuncion(d);
+    let funcion = obtenerFuncion(d).toLowerCase();
+    let fechaAposento = d["Seleccione fecha de aposento"] || "";
 
     let cumpleCorreo = !correoBuscar || correo.includes(correoBuscar);
-    let cumpleFecha = !fecha || d["Seleccione fecha de aposento"] === fecha;
-    let cumpleFuncion = !funcionBuscar || funcion === funcionBuscar;
+    let cumpleFecha = !fechaSeleccionada || fechaAposento === fechaSeleccionada;
+    let cumpleFuncion = !funcionBuscar || funcion.includes(funcionBuscar);
 
     return cumpleCorreo && cumpleFecha && cumpleFuncion;
   });
 
-  // 🔥 duplicados
+  // Mostrar u ocultar mensaje de "No encontrado"
+  if (filtrados.length === 0) {
+    mensaje.style.display = "block";
+    mensaje.innerText = "No se encontraron resultados para los filtros seleccionados.";
+    contenedorTabla.style.display = "none";
+    cardsContainer.innerHTML = "";
+    return;
+  }
+
+  mensaje.style.display = "none";
+  contenedorTabla.style.display = "table";
+
+  // Identificar duplicados por correo
   let contador = {};
   filtrados.forEach(d => {
     let correo = d["Dirección de correo electrónico"];
-    if (correo) {
-      contador[correo] = (contador[correo] || 0) + 1;
-    }
+    if (correo) contador[correo] = (contador[correo] || 0) + 1;
   });
 
-  // 🔥 ordenar SIEMPRE por fecha
-  filtrados.sort((a,b) => {
-    return convertirFecha(a["Seleccione fecha de aposento"]) - convertirFecha(b["Seleccione fecha de aposento"]);
-  });
+  // Ordenar por fecha de aposento
+  filtrados.sort((a,b) => convertirFecha(a["Seleccione fecha de aposento"]) - convertirFecha(b["Seleccione fecha de aposento"]));
 
-  const tabla = document.getElementById("tabla");
-  const cards = document.getElementById("cards");
-
-  tabla.innerHTML = "";
-  cards.innerHTML = "";
+  tablaBody.innerHTML = "";
+  cardsContainer.innerHTML = "";
 
   filtrados.forEach(d => {
-
     let correo = d["Dirección de correo electrónico"] || "-";
     let nombre = obtenerNombre(d);
     let funcion = obtenerFuncion(d);
-    let duplicado = contador[correo] > 1;
+    let fechaAposento = d["Seleccione fecha de aposento"] || "-";
+    let marcaTemporal = d["Marca temporal"] || "-";
+    let esDuplicado = contador[correo] > 1;
 
-    tabla.innerHTML += `
-      <tr style="${duplicado ? 'background:#ffe5e5' : ''}">
-        <td>${d["Marca temporal"] || "-"}</td>
-        <td>${correo}</td>
-        <td>${nombre}</td>
-        <td>${d["Seleccione fecha de aposento"] || "-"}</td>
-        <td>${funcion}</td>
-      </tr>
+    // Fila para tabla (Desktop)
+    let fila = document.createElement("tr");
+    if (esDuplicado) fila.style.background = "#ffe5e5";
+    fila.innerHTML = `
+      <td>${marcaTemporal}</td>
+      <td>${correo}</td>
+      <td>${nombre}</td>
+      <td>${fechaAposento}</td>
+      <td>${funcion}</td>
     `;
+    tablaBody.appendChild(fila);
 
-    cards.innerHTML += `
-      <div class="card-item" style="${duplicado ? 'border:2px solid red;' : ''}">
-        <b>${nombre}</b><br>
-        📧 ${correo}<br>
-        📅 ${d["Seleccione fecha de aposento"]}<br>
-        👤 ${funcion}<br>
-        🕒 ${d["Marca temporal"]}
-        ${duplicado ? '<br><span style="color:red;">⚠ Duplicado</span>' : ''}
+    // Card para móvil (Mobile)
+    cardsContainer.innerHTML += `
+      <div class="card-item" style="${esDuplicado ? 'border-left: 5px solid red;' : ''}">
+        <b>${nombre}</b> ${esDuplicado ? '<span class="badge-duplicado">DUPLICADO</span>' : ''}<br>
+        <small>📧 ${correo}</small><br>
+        <small>📅 <b>Aposento:</b> ${fechaAposento}</small><br>
+        <small>👤 <b>Cargo:</b> ${funcion}</small><br>
+        <small style="color:#999">🕒 Reg: ${marcaTemporal}</small>
       </div>
     `;
   });
-
 }
 
-// 🔥 eventos
+// 🔥 Eventos de escucha
 document.addEventListener("DOMContentLoaded", () => {
   init();
-
   document.getElementById("buscar").addEventListener("input", render);
   document.getElementById("fecha").addEventListener("change", render);
   document.getElementById("funcion").addEventListener("change", render);
 });
 
 function volver() {
+  // Ajusta esta URL según tu archivo principal
   window.location.href = "index.html";
 }
 
