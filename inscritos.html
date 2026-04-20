@@ -35,7 +35,7 @@ h1 {
 
 .filters {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
 }
 
@@ -53,7 +53,7 @@ input, select {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px;
+  min-width: 700px;
 }
 
 th, td {
@@ -115,13 +115,14 @@ th {
   <div class="filters">
     <input type="text" id="buscar" placeholder="Buscar por correo...">
     <select id="fecha"></select>
+    <input type="text" id="funcion" placeholder="Buscar por líder o función...">
   </div>
 </div>
 
 <div class="card">
 
 <div id="mensaje" class="mensaje">
-  Busca por correo o selecciona una fecha
+  Busca por correo, fecha o función
 </div>
 
 <div class="table-container">
@@ -132,6 +133,7 @@ th {
   <th>Correo</th>
   <th>Nombre</th>
   <th>Fecha Aposento</th>
+  <th>Función / Líder</th>
 </tr>
 </thead>
 <tbody id="tabla"></tbody>
@@ -150,12 +152,19 @@ const URL = "https://opensheet.elk.sh/1KnqBvdR7gnt2EO22AQbQcYiUYLMBpnFE28XrBPMYB
 
 let datos = [];
 
-// 🔥 detectar nombre aunque tenga espacios raros
+// 🔥 nombre
 function obtenerNombre(d) {
   return d["Nombre Completo"] || d["Nombre Completo "] || d["Nombre completo"] || "-";
 }
 
-// 🔥 convertir fecha para ordenar
+// 🔥 función / líder
+function obtenerFuncion(d) {
+  return d["Función que desarrolla en la visión de grupos de cuidado (Nombre de líder/supervisor respectivo):"] 
+      || d["Función que desarrolla en la visión de grupos de cuidado (Nombre de líder/supervisor respectivo):    "] 
+      || "-";
+}
+
+// 🔥 convertir fecha
 function convertirFecha(texto) {
   const meses = {
     "enero":0,"febrero":1,"marzo":2,"abril":3,
@@ -169,23 +178,18 @@ function convertirFecha(texto) {
   return new Date(2026, meses[match[2]], parseInt(match[1]));
 }
 
-// 🔥 cargar datos iniciales
+// 🔥 init
 async function init() {
   try {
     const res = await fetch(URL);
     datos = await res.json();
 
-    console.log("Datos cargados:", datos[0]);
-
-    // 🔥 obtener fechas únicas
     let fechas = [...new Set(datos.map(d => d["Seleccione fecha de aposento"]))];
 
-    // 🔥 limpiar + ordenar
     fechas = fechas
       .filter(f => f)
       .sort((a, b) => convertirFecha(a.trim()) - convertirFecha(b.trim()));
 
-    // 🔥 pintar select
     let select = document.getElementById("fecha");
     select.innerHTML = `<option value="">Filtrar por fecha</option>`;
 
@@ -198,13 +202,14 @@ async function init() {
   }
 }
 
-// 🔥 render principal
+// 🔥 render
 function render() {
 
   let correoBuscar = document.getElementById("buscar").value.toLowerCase();
   let fecha = document.getElementById("fecha").value;
+  let funcionBuscar = document.getElementById("funcion").value.toLowerCase();
 
-  if (!correoBuscar && !fecha) {
+  if (!correoBuscar && !fecha && !funcionBuscar) {
     document.getElementById("mensaje").style.display = "block";
     document.getElementById("tabla").innerHTML = "";
     document.getElementById("cards").innerHTML = "";
@@ -216,14 +221,16 @@ function render() {
   let filtrados = datos.filter(d => {
 
     let correo = (d["Dirección de correo electrónico"] || "").toLowerCase();
+    let funcion = obtenerFuncion(d).toLowerCase();
 
     let cumpleCorreo = !correoBuscar || correo.includes(correoBuscar);
     let cumpleFecha = !fecha || d["Seleccione fecha de aposento"] === fecha;
+    let cumpleFuncion = !funcionBuscar || funcion.includes(funcionBuscar);
 
-    return cumpleCorreo && cumpleFecha;
+    return cumpleCorreo && cumpleFecha && cumpleFuncion;
   });
 
-  // 🔥 detectar duplicados
+  // 🔥 duplicados
   let contador = {};
   filtrados.forEach(d => {
     let correo = d["Dirección de correo electrónico"];
@@ -232,17 +239,10 @@ function render() {
     }
   });
 
-  // 🔥 ordenar por nombre
+  // 🔥 ordenar SIEMPRE por fecha
   filtrados.sort((a,b) => {
-    return obtenerNombre(a).localeCompare(obtenerNombre(b));
+    return convertirFecha(a["Seleccione fecha de aposento"]) - convertirFecha(b["Seleccione fecha de aposento"]);
   });
-
-  // 🔥 si filtra por fecha → ordenar por fecha
-  if (fecha) {
-    filtrados.sort((a,b) => {
-      return convertirFecha(a["Seleccione fecha de aposento"]) - convertirFecha(b["Seleccione fecha de aposento"]);
-    });
-  }
 
   const tabla = document.getElementById("tabla");
   const cards = document.getElementById("cards");
@@ -254,32 +254,31 @@ function render() {
 
     let correo = d["Dirección de correo electrónico"] || "-";
     let nombre = obtenerNombre(d);
+    let funcion = obtenerFuncion(d);
     let duplicado = contador[correo] > 1;
 
-    // 🖥️ tabla
     tabla.innerHTML += `
       <tr style="${duplicado ? 'background:#ffe5e5' : ''}">
         <td>${d["Marca temporal"] || "-"}</td>
         <td>${correo}</td>
         <td>${nombre}</td>
         <td>${d["Seleccione fecha de aposento"] || "-"}</td>
+        <td>${funcion}</td>
       </tr>
     `;
 
-    // 📱 cards
     cards.innerHTML += `
       <div class="card-item" style="${duplicado ? 'border:2px solid red;' : ''}">
         <b>${nombre}</b><br>
         📧 ${correo}<br>
         📅 ${d["Seleccione fecha de aposento"]}<br>
+        👤 ${funcion}<br>
         🕒 ${d["Marca temporal"]}
         ${duplicado ? '<br><span style="color:red;">⚠ Duplicado</span>' : ''}
       </div>
     `;
   });
 
-  let duplicadosTotal = Object.values(contador).filter(c => c > 1).length;
-  console.log("Correos duplicados:", duplicadosTotal);
 }
 
 // 🔥 eventos
@@ -288,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("buscar").addEventListener("input", render);
   document.getElementById("fecha").addEventListener("change", render);
+  document.getElementById("funcion").addEventListener("input", render);
 });
 
 function volver() {
@@ -295,7 +295,6 @@ function volver() {
 }
 
 </script>
-
 
 </body>
 </html>
