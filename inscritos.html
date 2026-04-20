@@ -114,15 +114,29 @@ th {
 <div class="card">
   <div class="filters">
     <input type="text" id="buscar" placeholder="Buscar por correo...">
+
     <select id="fecha"></select>
-    <input type="text" id="funcion" placeholder="Buscar por líder o función...">
+
+    <select id="funcion">
+      <option value="">Filtrar por cargo</option>
+      <option value="Nuevo">Nuevo</option>
+      <option value="Hermano Mayor">Hermano Mayor</option>
+      <option value="Líder GFM">Líder GFM</option>
+      <option value="Maestro">Maestro</option>
+      <option value="Supervisor Auxiliar">Supervisor Auxiliar</option>
+      <option value="Supervisor General">Supervisor General</option>
+      <option value="Coordinador de Conectate">Coordinador de Conectate</option>
+      <option value="Coord. Pastoral">Coord. Pastoral</option>
+      <option value="Pastor Distrital">Pastor Distrital</option>
+      <option value="Otro">Otro</option>
+    </select>
   </div>
 </div>
 
 <div class="card">
 
 <div id="mensaje" class="mensaje">
-  Busca por correo, fecha o función
+  Busca por correo, fecha o cargo
 </div>
 
 <div class="table-container">
@@ -133,7 +147,7 @@ th {
   <th>Correo</th>
   <th>Nombre</th>
   <th>Fecha Aposento</th>
-  <th>Función / Líder</th>
+  <th>Cargo</th>
 </tr>
 </thead>
 <tbody id="tabla"></tbody>
@@ -157,7 +171,7 @@ function obtenerNombre(d) {
   return d["Nombre Completo"] || d["Nombre Completo "] || d["Nombre completo"] || "-";
 }
 
-// 🔥 función / líder
+// 🔥 cargo
 function obtenerFuncion(d) {
   return d["Función que desarrolla en la visión de grupos de cuidado (Nombre de líder/supervisor respectivo):"] 
       || d["Función que desarrolla en la visión de grupos de cuidado (Nombre de líder/supervisor respectivo):    "] 
@@ -207,7 +221,7 @@ function render() {
 
   let correoBuscar = document.getElementById("buscar").value.toLowerCase();
   let fecha = document.getElementById("fecha").value;
-  let funcionBuscar = document.getElementById("funcion").value.toLowerCase();
+  let funcionBuscar = document.getElementById("funcion").value;
 
   if (!correoBuscar && !fecha && !funcionBuscar) {
     document.getElementById("mensaje").style.display = "block";
@@ -221,11 +235,11 @@ function render() {
   let filtrados = datos.filter(d => {
 
     let correo = (d["Dirección de correo electrónico"] || "").toLowerCase();
-    let funcion = obtenerFuncion(d).toLowerCase();
+    let funcion = obtenerFuncion(d);
 
     let cumpleCorreo = !correoBuscar || correo.includes(correoBuscar);
     let cumpleFecha = !fecha || d["Seleccione fecha de aposento"] === fecha;
-    let cumpleFuncion = !funcionBuscar || funcion.includes(funcionBuscar);
+    let cumpleFuncion = !funcionBuscar || funcion === funcionBuscar;
 
     return cumpleCorreo && cumpleFecha && cumpleFuncion;
   });
@@ -287,7 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("buscar").addEventListener("input", render);
   document.getElementById("fecha").addEventListener("change", render);
-  document.getElementById("funcion").addEventListener("input", render);
+  document.getElementById("funcion").addEventListener("change", render);
 });
 
 function volver() {
